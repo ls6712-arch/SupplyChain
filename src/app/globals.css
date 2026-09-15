@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: theme('colors.paper');
+  color: theme('colors.ink');
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+}
+
+.ledger-table th {
+  @apply text-left font-medium text-inkSoft text-[11px] pb-2 border-b border-hairline;
+}
+.ledger-table td {
+  @apply py-3 px-2 border-b border-hairline align-top;
+}
+.tag-chip {
+  @apply inline-flex items-center gap-1.5 text-[11px] font-medium py-1 px-2 rounded-sm font-mono;
+}
