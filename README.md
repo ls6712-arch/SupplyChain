@@ -48,21 +48,39 @@ facility's `id` (`select id from facilities;`) and drop it into
 
 ## 3. Auth
 
-RLS policies check `organization_members` against `auth.uid()`, so you need
-at least one real Supabase Auth user mapped into that org before the app can
-read or write anything:
+Sign-in is magic-link (email a one-time link, no passwords). There's a real
+`/login` page now, wired to Supabase Auth. Two things to set up first:
+
+**In the Supabase dashboard**, under **Authentication → URL Configuration**:
+- **Site URL**: `http://localhost:3000` while developing locally (change to
+  your real deployed URL later, and add that URL here too)
+- **Redirect URLs**: add `http://localhost:3000/auth/callback` (and your
+  production `.../auth/callback` once deployed)
+
+Email sending works out of the box in Supabase's free tier for testing
+(rate-limited), so you don't need to configure a separate email provider to
+try this locally.
+
+**Then, add yourself to the seeded organization.** RLS checks
+`organization_members` against `auth.uid()`, so a signed-in user with no
+membership row will see empty pages everywhere (that's RLS working
+correctly, not a bug). Sign in once through `/login` first (so the user
+exists), then in the Supabase SQL editor:
 
 ```sql
+-- find your user id
+select id, email from auth.users;
+
+-- add yourself to the seeded org
 insert into organization_members (organization_id, user_id, role)
-values ('00000000-0000-0000-0000-000000000001', '<your-auth-user-id>', 'brand_admin');
+values ('00000000-0000-0000-0000-000000000001', '<paste-your-user-id>', 'brand_admin');
 ```
 
-Get `<your-auth-user-id>` from **Authentication → Users** after you sign up
-once through Supabase Auth (magic link or email/password — wiring an actual
-sign-in page is the next piece to build; for now you can create a user
-directly in the dashboard and use the Supabase JS client's
-`signInWithPassword` from a quick script or the browser console to get a
-session cookie while you're the only user testing this).
+Refresh the app — the dashboard should now load real data. Every other page
+under the sidebar nav (`src/app/(app)/...`) is guarded by
+`src/app/(app)/layout.tsx`, which redirects to `/login` if there's no
+session; `/login` and `/auth/callback` sit outside that guard so they render
+without the sidebar.
 
 ## 4. Install and run
 
@@ -86,9 +104,10 @@ and an append-only audit log per lot.
   audit log
 - Recommendations are immutable once created — approving records a
   separate `approvals` row rather than mutating the recommendation
+- Magic-link sign-in (`/login`), a session-refreshing middleware, and a
+  route guard on every workspace page (`src/app/(app)/layout.tsx`)
 
 **Still manual / not yet built:**
-- A real sign-in page (magic link via Supabase Auth is the fastest path)
 - An "active org" switcher — every page currently hardcodes the seeded
   org ID; fine for a single-brand pilot, not for multiple design partners
 - Partner and policy-rule creation forms (the pages read live data, but
